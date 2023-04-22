@@ -1,15 +1,77 @@
 ---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+import ChatComponent from '../components/ChatComponent.vue';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="Welcome to Astro.">
+	<main>
+		<ul role="list" class="flex justify-center space-x-4 mt-4">
+			<Card
+				href="#"
+				img="https://img.icons8.com/color/250/null/google-logo.png"
+				desc="Google Search Logo"
+				id="google"
+			/>
+			<Card
+				href="#"
+				img="https://img.icons8.com/fluency/250/null/bing--v1.png"
+				desc="Bing Search Logo"
+				id="bing"
+			/>
+			<Card
+				href="#"
+				img="https://img.icons8.com/color/250/null/duckduckgo--v1.png"
+				desc="DuckDuckGo Search Logo"
+				id="duckduckgo"
+			/>
+			<Card
+				href="#"
+				img="https://you.com/images/ydc-logo-lightdarkmode.svg"
+				desc="You dot com Search Logo"
+				id="you"
+			/>
+		</ul>
+
+		<div class="mb-24 flex justify-center text-gray-50 mt-8 w-full h-full">
+			<ChatComponent client:load/>
+		</div>
+
+		<div class="flex flex-col w-full overflow-hidden justify-center h-16 items-center text-gray-600 text-xs px-2 py-2">
+			<p class="flex flex-shrink-0 mr-8">Disclaimer: We are not affiliated with Google, Bing, Duckduckgo or you.com</p>
+			<ul class="flex flex-row max-w-full whitespace-nowrap overflow-x-scroll hide-scrollbar space-x-2 pr-4">
+				<li><p>Icons by Icon8:</p></li>
+				<li><a target="_blank" href="https://icons8.com/icon/StthcsrrqQG4/human">Human icon</a></li>
+				<li><a target="_blank" href="https://icons8.com/icon/22858/robot-2">Robot 2 icon</a></li>
+				<li><a target="_blank" href="https://icons8.com/icon/17949/google">Google icon</a></li>
+				<li><a target="_blank" href="https://icons8.com/icon/pOADWgX6vV63/bing">Bing icon</a></li>
+				<li><a target="_blank" href="https://icons8.com/icon/63778/duckduckgo">DuckDuckGo icon</a></li>
+			</ul>
+		</div>
+	</main>
+</Layout>
+
+<script is:inline>
+	const urlParams = new URLSearchParams(window.location.search);
+	const query = urlParams.get("s");
+
+	console.log("Query: ", query)
+
+	if (query) {
+		const googleBtn = document.querySelector("#google")
+		const ddgBtn = document.querySelector("#duckduckgo")
+		const youBtn = document.querySelector("#you")
+		const bingBtn = document.querySelector("#bing")
+
+		googleBtn.href = `https://www.google.com/search?q=${query}`;
+		ddgBtn.href = `https://duckduckgo.com/?q=${query}`;
+		youBtn.href = `https://you.com/search?q=${query}`;
+		bingBtn.href = `https://www.bing.com/search?q=${query}`;
+	}
+</script>
+
+<style>
+	.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+</style>

@@ -1,0 +1,18 @@
+---
+export interface Props {
+	img: string;
+	href: string;
+	desc: string
+	id: string;
+}
+
+
+const { href, img, desc, id } = Astro.props;
+---
+
+<li class="link-card w-20 h-20">
+	<a id={id} href={href} class="w-full h-full hover:bg-gray-800 flex items-center justify-center rounded-2xl border border-gray-700 ">
+		<img class=" w-16 h-16" src={img} alt={desc} />
+	</a>
+</li>
+
