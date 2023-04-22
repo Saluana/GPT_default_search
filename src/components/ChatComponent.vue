@@ -50,7 +50,7 @@
 				</div>
 			</div>
 
-			<div class="px-12" v-else>
+			<div class="px-12 py-12" v-else>
 				<h1 class="text-lg text-medium mb-4">
 					Please enter your OpenAI API key
 				</h1>
