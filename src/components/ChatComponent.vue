@@ -6,7 +6,7 @@
 			<div v-if="userHasApiKey">
 				<div
 					class="flex flex-col py-8 px-1 sm:px-8 border-b border-gray-600 last:border-b-0 border-opacity-30"
-					v-for="message in messages"
+					v-for="(message, index) in messages"
 					:key="message"
 				>
 					<div class="flex h-full flex-row">
@@ -33,7 +33,7 @@
 								class="flex flex-col aboslute bottom-0 justify-center items-center mt-4 py-4 space-y-2"
 							>
 								<li class="w-10 h-10">
-									<button @click="retryMessage">
+									<button @click="retryMessage(index)">
 										<i
 											class="fa-solid fa-rotate-right fa-xl hover:text-gray-300"
 										></i>
@@ -47,6 +47,25 @@
 							v-html="renderMD(message.content)"
 						></div>
 					</div>
+				</div>
+				<div id="query-bar" class="mb-4">
+					<form class="flex" id="query-form" @submit.prevent>
+						<div
+							id="chat-input"
+							class="w-full border bg-gray-800 outline-none focus:outline-offset-0 focus:outline-gray-600 text-gray-50 border-gray-700 rounded-2xl p-2 mt-4 px-4"
+							placeholder="Ask me anything..."
+							contenteditable="true"
+						></div>
+						<button
+							@click="sendMessage()"
+							type="submit"
+							class="w-10 h-10 rounded-2xl p-2 mt-4"
+						>
+							<i
+								class="fa-solid fa-paper-plane fa-xl ml-2 text-gray-300"
+							></i>
+						</button>
+					</form>
 				</div>
 			</div>
 
@@ -140,6 +159,19 @@ export default {
 			userHasApiKey.value = true;
 			settingsLoaded.value = true;
 
+			setTimeout(() => {
+				let chatInput = document.querySelector(
+					"#chat-input"
+				) as HTMLParagraphElement;
+
+				chatInput.addEventListener("keydown", (e: KeyboardEvent) => {
+					if (e.key === "Enter" && !e.shiftKey) {
+						e.preventDefault();
+						sendMessage();
+					}
+				});
+			}, 400);
+
 			const urlParams = new URLSearchParams(window.location.search);
 			const query = urlParams.get("s");
 			console.log(query);
@@ -163,9 +195,18 @@ export default {
 			userHasApiKey.value = true;
 		}
 
-		async function sendMessage(query: string) {
+		async function sendMessage(query: string = "default") {
 			const settings = localStorage.getItem("openai_settings");
 			if (!settings) return;
+
+			if (query === "default") {
+				let chatInput = document.querySelector(
+					"#chat-input"
+				) as HTMLParagraphElement;
+
+				query = chatInput.innerText;
+				chatInput.innerHTML = "";
+			}
 
 			const settingsObj = JSON.parse(settings);
 
@@ -201,10 +242,12 @@ export default {
 								role: "system",
 								content: settingsObj.systemMessage,
 							},
+							...messages.value,
 							{
 								role: "user",
-								content: `Rules: All responses must be properly formatted in markdown syntax.
-                                Query: ${query}`,
+								content: `Rules: All responses must be properly formatted in markdown syntax. Do not mention markdown in your response. Do not talk about the response.
+                                Query: ${query}
+								Response:`,
 							},
 						],
 						temperature: 0.9,
@@ -254,10 +297,10 @@ export default {
 			}
 		}
 
-		function retryMessage() {
-			const query = messages.value[0].content;
-			messages.value = [];
+		function retryMessage(index: number) {
+			const query = messages.value[index - 1].content;
 
+			messages.value.splice(index - 1, 2);
 			sendMessage(query);
 		}
 
@@ -273,6 +316,7 @@ export default {
 			messages,
 			renderMD,
 			retryMessage,
+			sendMessage,
 		};
 	},
 };
@@ -353,8 +397,8 @@ export default {
 
 /* Code blocks */
 #msg-content pre {
-	background-color: #f5f5f5;
-	border: 1px solid #ccc;
+	background-color: #374151;
+	border: 1px solid #4b5563;
 	border-radius: 4px;
 	padding: 0.5em;
 	overflow-x: auto;
@@ -362,11 +406,14 @@ export default {
 	word-wrap: break-word;
 	font-family: "Fira Code", monospace;
 	font-size: 0.9em;
+	margin-bottom: 1em;
+	margin-top: 1em;
 }
 
 /* Inline code */
 #msg-content code {
-	background-color: #f5f5f5;
+	background-color: #374151;
+	color: #f9fafb;
 	border-radius: 4px;
 	padding: 2px 4px;
 	font-family: "Fira Code", monospace;
