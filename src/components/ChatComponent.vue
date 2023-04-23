@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="flex flex-col px-4 w-full sm:w-2/3 h-2/3 border border-gray-700 rounded-2xl"
+		class="flex flex-col px-4 w-full sm:w-5/6 md:w-2/3 h-2/3 border border-gray-700 rounded-2xl"
 	>
 		<div v-if="settingsLoaded">
 			<div v-if="userHasApiKey">
@@ -35,7 +35,7 @@
 								<li class="w-10 h-10">
 									<button @click="retryMessage(index)">
 										<i
-											class="fa-solid fa-rotate-right fa-xl hover:text-gray-300"
+											class="fa-solid fa-rotate-right fa-xl text-gray-300 hover:text-gray-500"
 										></i>
 									</button>
 								</li>
