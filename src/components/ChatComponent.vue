@@ -43,7 +43,7 @@
 						</div>
 						<div
 							id="msg-content"
-							class="pt-2"
+							class="pt-2 max-w-full flex-wrap overflow-hidden"
 							v-html="renderMD(message.content)"
 						></div>
 					</div>
@@ -110,6 +110,7 @@
 <script lang="ts">
 import { onMounted, ref } from "vue";
 import { marked } from "marked";
+import { searchBing } from "../utils/bingSearch";
 
 export default {
 	setup() {
@@ -151,7 +152,6 @@ export default {
 					})
 				);
 				settingsLoaded.value = true;
-				return;
 			}
 
 			let key = JSON.parse(apiKey);
@@ -223,6 +223,64 @@ export default {
 			messages.value.push(userMessage);
 			messages.value.push(assistantMessage);
 
+			const validator = await fetch(
+				"https://api.openai.com/v1/chat/completions",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${openaiKey.value}`,
+					},
+					body: JSON.stringify({
+						model: settingsObj.model,
+						messages: [
+							{
+								role: "system",
+								content:
+									"Your job is to determine what action to take based on the users query. If the answer requires location data respond with: MAPS, if you need up to date information respond with: SEARCH, otherwise respond with ANSWER. Do not include any other words or tokens in your response.",
+							},
+							{
+								role: "user",
+								content: `
+                                Query: ${query}
+								Response:`,
+							},
+						],
+						temperature: 0.5,
+						top_p: 1,
+						max_tokens: 250,
+						frequency_penalty: 0,
+						presence_penalty: 0,
+					}),
+				}
+			);
+
+			const validatorJson = await validator.json();
+			const validatorRes =
+				validatorJson.choices[0].message.content || ("" as string);
+
+			if (validatorRes.toLowerCase().includes("maps")) {
+				window.location.href =
+					"https://www.google.ca/maps/search/" + query;
+				return;
+			}
+
+			let searchResults;
+
+			if (validatorRes.toLowerCase().includes("search")) {
+				console.log("searching");
+				const bingApiKey = localStorage.getItem("bing_api_key");
+
+				if (bingApiKey) {
+					searchResults = await searchBing(
+						query,
+						8,
+						JSON.parse(bingApiKey)
+					);
+					console.log(searchResults);
+				}
+			}
+
 			//get the index of the assistant message we just created
 			const assistantMessageIndex =
 				messages.value.indexOf(assistantMessage);
@@ -245,9 +303,10 @@ export default {
 							...messages.value,
 							{
 								role: "user",
-								content: `Rules: All responses must be properly formatted in markdown syntax. Do not mention markdown in your response. Do not talk about the response.
-                                Query: ${query}
-								Response:`,
+								content: `Rules: All responses must be properly formatted in markdown syntax. Do not mention markdown in your response. Do not talk about the response.\n\n
+								If search results are not equal to null, use the data within the JSON to inform your response. \n\n
+								search results: ${searchResults || null}\n\n
+                                ${query}`,
 							},
 						],
 						temperature: 0.9,
@@ -279,6 +338,19 @@ export default {
 
 				for (const line of lines) {
 					if (line.includes("[DONE]")) {
+						if (searchResults && searchResults.data) {
+							console.log(
+								"search result data",
+								searchResults.data
+							);
+							messages.value[
+								assistantMessageIndex
+							].content += `## Search Results \n\n ${searchResults.data.map(
+								(result) => {
+									return `\n\n ### [${result.name}](${result.url}) \n\n ${result.description}`;
+								}
+							)}`;
+						}
 						return;
 					}
 
@@ -326,7 +398,7 @@ export default {
 #msg-content {
 	font-family: system-ui, sans-serif;
 	line-height: 1.6;
-	color: #f9fafb;
+	color: #f3f4f6;
 }
 
 /* Headings */

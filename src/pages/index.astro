@@ -2,10 +2,14 @@
 import Layout from '../layouts/Layout.astro';
 import Card from '../components/Card.astro';
 import ChatComponent from '../components/ChatComponent.vue';
+import SettingsNav from '../components/SettingsNav.vue';
 ---
 
 <Layout title="Welcome to Astro.">
 	<main>
+		<div id="side-nav" class="hidden">
+			<SettingsNav client:load/>
+		</div>
 		<ul role="list" class="flex justify-center space-x-4 mt-4">
 			<Card
 				href="https://google.com"
@@ -31,6 +35,12 @@ import ChatComponent from '../components/ChatComponent.vue';
 				desc="You dot com Search Logo"
 				id="you"
 			/>
+			<Card
+			href=""
+			img="https://img.icons8.com/nolan/250/apple-settings.png"
+			desc="Website settings icon"
+			id="settings-btn"
+			/>
 		</ul>
 
 		<div class="mb-24 flex justify-center text-gray-50 mt-8 w-full h-full">
@@ -46,6 +56,7 @@ import ChatComponent from '../components/ChatComponent.vue';
 				<li><a target="_blank" href="https://icons8.com/icon/17949/google">Google icon</a></li>
 				<li><a target="_blank" href="https://icons8.com/icon/pOADWgX6vV63/bing">Bing icon</a></li>
 				<li><a target="_blank" href="https://icons8.com/icon/63778/duckduckgo">DuckDuckGo icon</a></li>
+				<li><a target="_blank" href="https://icons8.com/icon/zxUWtopU6XdM/settings">Settings icon</a></li>
 			</ul>
 		</div>
 	</main>
@@ -68,6 +79,13 @@ import ChatComponent from '../components/ChatComponent.vue';
 		youBtn.href = `https://you.com/search?q=${query}`;
 		bingBtn.href = `https://www.bing.com/search?q=${query}`;
 	}
+
+	const settingsBtn = document.querySelector("#settings-btn")
+	settingsBtn.addEventListener("click", (e) => {
+		e.preventDefault()
+		const sideNav = document.querySelector("#side-nav")
+		sideNav.classList.toggle("hidden")
+	})
 </script>
 
 <style>
