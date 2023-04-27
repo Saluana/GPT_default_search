@@ -44,7 +44,7 @@
 						<div
 							id="msg-content"
 							class="pt-2 max-w-full flex-wrap overflow-hidden"
-							v-html="renderMD(message.content)"
+							v-html="renderMD(message.content.join(''))"
 						></div>
 					</div>
 				</div>
@@ -122,7 +122,7 @@ export default {
 
 		type Message = {
 			role: "user" | "assistant";
-			content: string;
+			content: string[];
 		};
 
 		let settings: Settings;
@@ -135,23 +135,24 @@ export default {
 			const apiKey = localStorage.getItem("openai_api_key");
 			const openAiSettings = localStorage.getItem("openai_settings");
 
+			if (!openAiSettings) {
+				settings = {
+					systemMessage:
+						"Let's spin up an instance of GPT that is fun and informative, answering all of the users queries, truthfully and creatively.",
+					model: "gpt-3.5-turbo",
+					mode: "creative",
+				};
+
+				localStorage.setItem(
+					"openai_settings",
+					JSON.stringify(settings)
+				);
+			}
+
 			if (!apiKey) {
 				console.log("No API key found");
 				settingsLoaded.value = true;
 				return;
-			}
-
-			if (!openAiSettings) {
-				localStorage.setItem(
-					"openai_settings",
-					JSON.stringify({
-						systemMessage:
-							"Let's spin up an instance of GPT that is fun and informative, answering all of the users queries, truthfully and creatively.",
-						model: "gpt-3.5-turbo",
-						mode: "creative",
-					})
-				);
-				settingsLoaded.value = true;
 			}
 
 			let key = JSON.parse(apiKey);
@@ -212,16 +213,23 @@ export default {
 
 			const userMessage: Message = {
 				role: "user",
-				content: query,
+				content: [query],
 			};
 
 			const assistantMessage: Message = {
 				role: "assistant",
-				content: "",
+				content: [],
 			};
 
 			messages.value.push(userMessage);
 			messages.value.push(assistantMessage);
+
+			let prvMsgs = messages.value.map((message) => {
+				return {
+					role: message.role,
+					content: message.content.join(" "),
+				};
+			});
 
 			const validator = await fetch(
 				"https://api.openai.com/v1/chat/completions",
@@ -285,6 +293,18 @@ export default {
 			const assistantMessageIndex =
 				messages.value.indexOf(assistantMessage);
 
+			if (searchResults && searchResults.data) {
+				messages.value[assistantMessageIndex].content.push(
+					`\n\n## Search Results \n\n ${searchResults.data
+						.map((result) => {
+							return `\n\n ### [${result.name}](${result.url}) \n\n ${result.description}`;
+						})
+						.join("")}`
+				);
+			} else {
+				messages.value[assistantMessageIndex].content.push("");
+			}
+
 			const response = await fetch(
 				"https://api.openai.com/v1/chat/completions",
 				{
@@ -300,19 +320,19 @@ export default {
 								role: "system",
 								content: settingsObj.systemMessage,
 							},
-							...messages.value,
+							...prvMsgs,
 							{
 								role: "user",
 								content: `Rules: All responses must be properly formatted in markdown syntax. Do not mention markdown in your response. Do not talk about the response.\n\n
 								If search results are not equal to null, use the data within the JSON to inform your response. \n\n
-								search results: ${searchResults || null}\n\n
+								search results: ${JSON.stringify(searchResults) || null}\n\n
                                 ${query}`,
 							},
 						],
 						temperature: 0.9,
 						top_p: 1,
 						stream: true,
-						max_tokens: 3000,
+						max_tokens: 1300,
 						frequency_penalty: 0,
 						presence_penalty: 0,
 					}),
@@ -338,19 +358,6 @@ export default {
 
 				for (const line of lines) {
 					if (line.includes("[DONE]")) {
-						if (searchResults && searchResults.data) {
-							console.log(
-								"search result data",
-								searchResults.data
-							);
-							messages.value[
-								assistantMessageIndex
-							].content += `\n\n## Search Results \n\n ${searchResults.data.map(
-								(result) => {
-									return `\n\n ### [${result.name}](${result.url}) \n\n ${result.description}`;
-								}
-							)}`;
-						}
 						return;
 					}
 
@@ -361,8 +368,13 @@ export default {
 							data.choices[0].delta &&
 							data.choices[0].delta.content !== undefined
 						) {
-							messages.value[assistantMessageIndex].content +=
-								data.choices[0].delta.content;
+							messages.value[
+								assistantMessageIndex
+							].content.splice(
+								-1,
+								0,
+								data.choices[0].delta.content
+							);
 						}
 					}
 				}
@@ -370,7 +382,8 @@ export default {
 		}
 
 		function retryMessage(index: number) {
-			const query = messages.value[index - 1].content;
+			const query = messages.value[index - 1].content.join("");
+			console.log(query);
 
 			messages.value.splice(index - 1, 2);
 			sendMessage(query);
