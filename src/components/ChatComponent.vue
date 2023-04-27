@@ -135,6 +135,19 @@ export default {
 			const apiKey = localStorage.getItem("openai_api_key");
 			const openAiSettings = localStorage.getItem("openai_settings");
 
+			setTimeout(() => {
+				let chatInput = document.querySelector(
+					"#chat-input"
+				) as HTMLParagraphElement;
+
+				chatInput.addEventListener("keydown", (e: KeyboardEvent) => {
+					if (e.key === "Enter" && !e.shiftKey) {
+						e.preventDefault();
+						sendMessage();
+					}
+				});
+			}, 400);
+
 			if (!openAiSettings) {
 				settings = {
 					systemMessage:
@@ -159,19 +172,6 @@ export default {
 			openaiKey.value = key;
 			userHasApiKey.value = true;
 			settingsLoaded.value = true;
-
-			setTimeout(() => {
-				let chatInput = document.querySelector(
-					"#chat-input"
-				) as HTMLParagraphElement;
-
-				chatInput.addEventListener("keydown", (e: KeyboardEvent) => {
-					if (e.key === "Enter" && !e.shiftKey) {
-						e.preventDefault();
-						sendMessage();
-					}
-				});
-			}, 400);
 
 			const urlParams = new URLSearchParams(window.location.search);
 			const query = urlParams.get("s");
