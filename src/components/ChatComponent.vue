@@ -345,7 +345,7 @@ export default {
 							);
 							messages.value[
 								assistantMessageIndex
-							].content += `## Search Results \n\n ${searchResults.data.map(
+							].content += `\n\n## Search Results \n\n ${searchResults.data.map(
 								(result) => {
 									return `\n\n ### [${result.name}](${result.url}) \n\n ${result.description}`;
 								}
