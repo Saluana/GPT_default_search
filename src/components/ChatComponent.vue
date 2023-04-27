@@ -194,6 +194,8 @@ export default {
 			);
 
 			userHasApiKey.value = true;
+
+			window.location.href = window.location.href;
 		}
 
 		async function sendMessage(query: string = "default") {
